@@ -13,7 +13,8 @@ def get_mask(lr, mask_type='fsaverage', icoorder=None):
     return mask
 
 
-def get_searchlights(lr, radius, mask_type='fsaverage', icoorder=5, return_distances=False):
+def get_searchlights(
+        lr, radius, mask_type='fsaverage', icoorder=5, return_distances=False):
     assert radius <= 20
     assert icoorder <= 5
     assert mask_type in ['fsaverage', 'fsaverage6', 'fsaverage5', 'none']
@@ -27,7 +28,8 @@ def get_searchlights(lr, radius, mask_type='fsaverage', icoorder=5, return_dista
         cortical_indices = np.arange(nv)
         mapping = None
 
-    npz = np.load(os.path.join(DIR, 'data', f'sls_fsaverage_{lr}h_20mm_icoorder5.npz'))
+    npz = np.load(os.path.join(
+        DIR, 'data', f'sls_fsaverage_{lr}h_20mm_icoorder5.npz'))
 
     sls_all = np.array_split(npz['concatenated_searchlights'], npz['sections'])
     dists_all = np.array_split(npz['concatenated_distances'], npz['sections'])

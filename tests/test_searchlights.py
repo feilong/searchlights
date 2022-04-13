@@ -1,4 +1,5 @@
 import os
+import pytest
 import numpy as np
 from searchlights import get_searchlights
 
@@ -19,9 +20,12 @@ def test_compare_with_legacy_files():
                 print(lr, radius, mask_type)
 
                 npz = np.load(fn)
-                sls1 = np.array_split(npz['concatenated'], npz['sections'])
-                dists1 = np.array_split(npz['concatenated_dists'], npz['sections'])
-                sls2, dists2 = get_searchlights(lr, radius, mask_type=mask_type, return_distances=True)
+                sls1 = np.array_split(
+                    npz['concatenated'], npz['sections'])
+                dists1 = np.array_split(
+                    npz['concatenated_dists'], npz['sections'])
+                sls2, dists2 = get_searchlights(
+                    lr, radius, mask_type=mask_type, return_distances=True)
 
                 for sl1, sl2, d1, d2 in zip(sls1, sls2, dists1, dists2):
                     np.testing.assert_array_equal(sl1, sl2)
@@ -32,7 +36,8 @@ def test_searchlights_without_masking():
     mask_type = 'none'
     radius = 20
     for lr in 'lr':
-        sls = get_searchlights(lr, radius, mask_type=mask_type, return_distances=False)
+        sls = get_searchlights(
+            lr, radius, mask_type=mask_type, return_distances=False)
         cat = np.concatenate(sls)
         assert len(sls) == 10242
         assert cat.min() == 0
