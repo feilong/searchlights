@@ -42,3 +42,20 @@ def test_searchlights_without_masking():
         assert len(sls) == 10242
         assert cat.min() == 0
         assert cat.max() == 10241
+
+
+def test_various_mask_types():
+    radius = 20
+    conditions = [
+        ['fsaverage5', (9354, 9361)],
+        ['fsaverage6', (9372, 9369)],
+        ['fsaverage', (9372, 9370)],
+    ]
+    for mask_type, nvs in conditions:
+        for lr, nv in zip('lr', nvs):
+            sls, dists = get_searchlights(
+                lr, radius, mask_type=mask_type, return_distances=True)
+            cat = np.concatenate(sls)
+            assert len(sls) == nv
+            assert cat.max() == nv - 1
+            assert cat.min() == 0
