@@ -35,7 +35,7 @@ python -m pip install searchlights
 
 The surface-based fMRI data we usually use (e.g., {cite:t}`10.1016/j.neuroimage.2018.08.029`) are in `fsaverage` space, downsampled to a lower resolution (`icoorder5`, approximately 3 mm vertex spacing).
 The surface has 9372 vertices for the left hemisphere, and 9370 vertices for the right hemisphere.
-The code below shows how to get the searchlights for the right hemisphere with a 20 mm radius.
+The code below shows how to get the searchlights for the left hemisphere with a 20 mm radius.
 
 ```{code-cell}python
 import numpy as np
