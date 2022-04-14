@@ -1,0 +1,6 @@
+table.autosummary td:first-child {
+    white-space: normal !important;
+}
+table.autosummary colgroup col {
+    width: auto !important;
+}
