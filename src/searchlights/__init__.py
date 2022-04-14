@@ -3,17 +3,19 @@ import numpy as np
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
+__all__ = ['get_searchlights', 'get_mask']
 
-def get_mask(lr, mask_type='fsaverage', icoorder=None):
+
+def get_mask(lr, mask_space='fsaverage', icoorder=None):
     """Get the boolean cortical mask.
 
     Parameters
     ----------
     lr : {'l', 'r'}
         Get the mask for the left ('l') or right ('r') hemisphere.
-    mask_type : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
+    mask_space : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
         Which cortical mask to get. Note that the masks slightly differ
-        for different ``mask_type``, even at the same resolution.
+        for different ``mask_space``, even at the same resolution.
     icoorder : int or None
         The spatial resolution of the output mask. If it's an integer, the
         resolution of the output mask will be reduced so that it won't be
@@ -27,7 +29,7 @@ def get_mask(lr, mask_type='fsaverage', icoorder=None):
         for non-cortical vertices. The resolution is determined by
         ``icoorder``.
     """
-    fn = os.path.join(DIR, 'data', f'mask_{mask_type}_{lr}h.npy')
+    fn = os.path.join(DIR, 'data', f'mask_{mask_space}_{lr}h.npy')
     mask = np.load(fn)
     if icoorder is not None:
         nv = 4**icoorder * 10 + 2
@@ -36,7 +38,7 @@ def get_mask(lr, mask_type='fsaverage', icoorder=None):
 
 
 def get_searchlights(
-        lr, radius, mask_type='fsaverage', icoorder=5, return_distances=False):
+        lr, radius, mask_space='fsaverage', icoorder=5, return_distances=False):
     """Get searchlight indices based on precomputed files.
 
     Parameters
@@ -45,7 +47,7 @@ def get_searchlights(
         Get the searchlights for the left ('l') or right ('r') hemisphere.
     radius : int or float
         The searchlight radius.
-    mask_type : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
+    mask_space : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
         Which cortical mask to be used for the searchlights. The mask
         should be the same as the one applied to brain data matrices.
     icoorder : int, default=5
@@ -69,10 +71,10 @@ def get_searchlights(
     """
     assert radius <= 20
     assert icoorder <= 5
-    assert mask_type in ['fsaverage', 'fsaverage6', 'fsaverage5', 'none']
+    assert mask_space in ['fsaverage', 'fsaverage6', 'fsaverage5', 'none']
 
-    if mask_type != 'none':
-        mask = get_mask(lr, mask_type=mask_type, icoorder=icoorder)
+    if mask_space != 'none':
+        mask = get_mask(lr, mask_space=mask_space, icoorder=icoorder)
         cortical_indices = np.where(mask)[0]
         mapping = np.cumsum(mask) - 1
     else:
