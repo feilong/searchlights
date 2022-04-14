@@ -1,0 +1,9 @@
+format: jb-book
+root: index
+parts:
+- caption: Examples
+  chapters:
+  - file: example
+- caption: API reference
+  chapters:
+  - file: api/searchlights/index

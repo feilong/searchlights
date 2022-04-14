@@ -1,0 +1,31 @@
+title: Searchlights
+author: The Searchlights Developers
+
+execute:
+  execute_notebooks: force
+
+latex:
+  latex_documents:
+    targetname: book.tex
+
+bibtex_bibfiles:
+  - references.bib
+
+repository:
+  url: https://github.com/feilong/searchlights
+  path_to_book: docs
+  branch: main
+
+html:
+  use_issues_button: true
+  use_repository_button: true
+
+sphinx:
+  extra_extensions:
+  - 'numpydoc'
+  - 'autoapi.extension'
+  config:
+    autoapi_dirs: ../src/searchlights
+    autoapi_template_dir: ../_autoapi_templates
+    autoapi_root: api
+    bibtex_reference_style: author_year
