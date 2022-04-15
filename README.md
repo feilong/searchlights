@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/feilong/searchlights/branch/main/graph/badge.svg?token=A3W4ZK1RAM)](https://codecov.io/gh/feilong/searchlights)
 [![PyPI](https://img.shields.io/pypi/v/searchlights)](https://pypi.org/project/searchlights/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/searchlights)](https://pypistats.org/packages/searchlights)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/searchlights)
