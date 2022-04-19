@@ -76,6 +76,72 @@ def download_searchlights(lr, radius, icoorder):
     return sls, dists
 
 
+def load_searchlights(lr, radius, icoorder):
+    basename = f'sls_fsaverage_{lr}h_{radius}mm_icoorder{icoorder}.npz'
+    fn1 = os.path.join(DIR, 'data', basename)
+    if os.path.exists(fn1):
+        sls, dists = load_npz(fn1)
+        return sls, dists
+
+    sls, dists = download_searchlights(lr, radius, icoorder)
+    return sls, dists
+
+
+def convert_searchlights(sls, dists, lr, radius, mask_space, icoorder):
+    """
+    Convert higher-resolution/larger-radius/unmasked searchlights to
+    lower-resolution/smaller-radius/masked.
+
+    Parameters
+    ----------
+    sls : list of ndarray
+        Each entry is an ndarray of integers, which are the indices of the
+        vertices in a searchlight.
+    dists : list of ndarray
+        Each entry is an ndarray of float numbers, which are the distances
+        between vertices in a searchlight and the center of the
+        searchlight. The order of vertices are the same as ``sls``.
+    lr : {'l', 'r'}
+        Whether the searchlights are for the left ('l') or right ('r')
+        hemisphere.
+    radius : int or float
+        The searchlight radius.
+    mask_space : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
+        Which cortical mask to be used for the searchlights. The mask
+        should be the same as the one applied to brain data matrices.
+    icoorder : int, default=5
+        The spatial resolution of cortical vertices. This should also be
+        the same as that of your data matrices.
+
+    Returns
+    -------
+    sls_new : list of ndarray
+        The new list of searchlight indices after conversion.
+    dists_new : list of ndarray
+        The new list of distnaces to searchlight center after conversion.
+    """
+    if mask_space != 'none':
+        mask = get_mask(lr, mask_space=mask_space, icoorder=icoorder)
+        cortical_indices = np.where(mask)[0]
+        mapping = np.cumsum(mask) - 1
+    else:
+        nv = 4**icoorder * 10 + 2
+        cortical_indices = np.arange(nv)
+        mapping = None
+
+    sls_new, dists_new = [], []
+    for i, (sl, d) in enumerate(zip(sls, dists)):
+        if i in cortical_indices:
+            m = np.logical_and(np.isin(sl, cortical_indices), d <= radius)
+            if mapping is None:
+                sls_new.append(sl[m])
+            else:
+                sls_new.append(mapping[sl[m]])
+            dists_new.append(d[m])
+
+    return sls_new, dists_new
+
+
 def get_searchlights(
         lr, radius, mask_space='fsaverage', icoorder=5,
         return_distances=False):
