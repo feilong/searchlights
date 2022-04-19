@@ -1,4 +1,5 @@
 import os
+import importlib
 import numpy as np
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -37,8 +38,47 @@ def get_mask(lr, mask_space='fsaverage', icoorder=None):
     return mask
 
 
+def load_npz(fn):
+    npz = np.load(fn)
+    sls = np.array_split(npz['concatenated_searchlights'], npz['sections'])
+    dists = np.array_split(npz['concatenated_distances'], npz['sections'])
+    return sls, dists
+
+
+def download_searchlights(lr, radius, icoorder):
+    if lr not in ['l', 'r']:
+        raise ValueError("The `lr` parameter can only be 'l' or 'r'.")
+    if radius not in [20, 30]:
+        raise ValueError("The `radius` parameter can only be 20 or 30.")
+    if icoorder not in [5, 6]:
+        raise ValueError("The `icoorder` parameter can only be 5 or 6.")
+    if importlib.util.find_spec('datalad') is None:
+        raise ModuleNotFoundError(
+            'datalad package not found, which is required to download '
+            'additional data. See https://www.datalad.org/#install for '
+            'instructions on installing datalad.')
+
+    import datalad.api as dl
+
+    dset = dl.install(
+        path=os.path.join(DIR, 'datalad'),
+        source='https://gin.g-node.org/feilong/searchlights')
+
+    fn = f'sls_fsaverage_{lr}h_{radius}mm_icoorder{icoorder}.npz'
+    result = dset.get(fn)[0]
+
+    if result['status'] not in ['ok', 'notneeded']:
+        raise ValueError(
+            f"datalad `get` status is {result['status']}, likely due to "
+            "problems downloading the file.")
+
+    sls, dists = load_npz(result['path'])
+    return sls, dists
+
+
 def get_searchlights(
-        lr, radius, mask_space='fsaverage', icoorder=5, return_distances=False):
+        lr, radius, mask_space='fsaverage', icoorder=5,
+        return_distances=False):
     """Get searchlight indices based on precomputed files.
 
     Parameters
