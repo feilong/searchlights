@@ -38,8 +38,8 @@ def get_mask(lr, mask_space='fsaverage', icoorder=None):
     return mask
 
 
-def load_npz(fn):
-    npz = np.load(fn)
+def load_npz(npz_fn):
+    npz = np.load(npz_fn)
     sls = np.array_split(npz['concatenated_searchlights'], npz['sections'])
     dists = np.array_split(npz['concatenated_distances'], npz['sections'])
     return sls, dists
@@ -122,11 +122,9 @@ def get_searchlights(
         cortical_indices = np.arange(nv)
         mapping = None
 
-    npz = np.load(os.path.join(
-        DIR, 'data', f'sls_fsaverage_{lr}h_20mm_icoorder5.npz'))
-
-    sls_all = np.array_split(npz['concatenated_searchlights'], npz['sections'])
-    dists_all = np.array_split(npz['concatenated_distances'], npz['sections'])
+    npz_fn = os.path.join(
+        DIR, 'data', f'sls_fsaverage_{lr}h_20mm_icoorder5.npz')
+    sls_all, dists_all = load_npz(npz_fn)
 
     sls, dists = [], []
     for i, (sl, d) in enumerate(zip(sls_all, dists_all)):
