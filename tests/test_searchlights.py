@@ -1,7 +1,8 @@
 import os
 import pytest
+import importlib
 import numpy as np
-from searchlights import get_searchlights
+from searchlights import get_searchlights, list_cache_files
 
 
 def test_compare_with_legacy_files():
@@ -59,3 +60,34 @@ def test_various_mask_spaces():
             assert len(sls) == nv
             assert cat.max() == nv - 1
             assert cat.min() == 0
+
+
+def test_datalad_files():
+    if importlib.util.find_spec('datalad') is None:
+        pytest.skip("Skip downloading tests: datalad not installed.")
+    for lr in 'lr':
+        sls, dists = get_searchlights(
+            lr, 30, 'none', 5, return_distances=True, cache=False)
+        sls2 = get_searchlights(
+            lr, 30.0, 'none', 5, return_distances=False, cache=False)
+        for sl1, sl2 in zip(sls, sls2):
+            np.testing.assert_array_equal(sl1, sl2)
+
+
+def test_original_data_files():
+    for lr in 'lr':
+        sls, dists = get_searchlights(
+            lr, 20, 'none', 5, return_distances=True, cache=False)
+        sls2 = get_searchlights(
+            lr, 20.0, 'none', 5, return_distances=False, cache=False)
+        for sl1, sl2 in zip(sls, sls2):
+            np.testing.assert_array_equal(sl1, sl2)
+
+
+def test_save_files():
+    for fn in list_cache_files():
+        os.remove(fn)
+
+    for lr in 'lr':
+        sls, dists = get_searchlights(
+            lr, 10, 'fsaverage', 5, return_distances=True, cache=True)

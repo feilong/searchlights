@@ -1,4 +1,5 @@
 import os
+from glob import glob
 import importlib
 import numpy as np
 
@@ -105,7 +106,7 @@ def convert_searchlights(sls, dists, lr, radius, mask_space, icoorder):
         Whether the searchlights are for the left ('l') or right ('r')
         hemisphere.
     radius : int or float
-        The searchlight radius.
+        The searchlight radius in mm.
     mask_space : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
         Which cortical mask to be used for the searchlights. The mask
         should be the same as the one applied to brain data matrices.
@@ -144,7 +145,7 @@ def convert_searchlights(sls, dists, lr, radius, mask_space, icoorder):
 
 def get_searchlights(
         lr, radius, mask_space='fsaverage', icoorder=5,
-        return_distances=False):
+        return_distances=False, cache=False):
     """Get searchlight indices based on precomputed files.
 
     Parameters
@@ -152,7 +153,7 @@ def get_searchlights(
     lr : {'l', 'r'}
         Get the searchlights for the left ('l') or right ('r') hemisphere.
     radius : int or float
-        The searchlight radius.
+        The searchlight radius in mm.
     mask_space : {'fsaverage', 'fsaverage6', 'fsaverage5', 'none'}, optional
         Which cortical mask to be used for the searchlights. The mask
         should be the same as the one applied to brain data matrices.
@@ -163,6 +164,9 @@ def get_searchlights(
         Whether to also return the distances to the searchlight center
         (True) or not (False). If ``return_distances=True``, two lists are
         returned instead of one.
+    cache : bool, default=False
+        Whether to store computed searchlights as an npz file for future
+        use.
 
     Returns
     -------
@@ -175,34 +179,69 @@ def get_searchlights(
         searchlight. The order of vertices are the same as ``sls``. Only
         returned when ``return_distances=True``.
     """
-    assert radius <= 20
-    assert icoorder <= 5
+    if isinstance(radius, float) and float(int(radius)) == radius:
+        radius = int(radius)  # to avoid duplicate files, e.g., 20 and 20.0
+
+    if mask_space == 'none':
+        base_name = f'sls_fsaverage_{lr}h_{radius}mm_icoorder{icoorder}.npz'
+    else:
+        base_name = 'sls_fsaverage_'\
+            f'{lr}h_{radius}mm_icoorder{icoorder}_{mask_space}-mask.npz'
+
+    # Load the npz file if it already exists
+    npz_fn = os.path.join(DIR, 'data', base_name)
+    if os.path.exists(npz_fn):
+        sls, dists = load_npz(npz_fn)
+        if return_distances:
+            return sls, dists
+        return sls
+
+    npz_fn2 = os.path.join(DIR, 'datalad', base_name)
+    if os.path.exists(npz_fn2):
+        sls, dists = load_searchlights(lr, radius, icoorder)
+        if return_distances:
+            return sls, dists
+        return sls
+
+
+    # Check the parameters.
+    if importlib.util.find_spec('datalad') is None:
+        assert radius <= 20, "Maximum supported searchlight radius is 20 "\
+            "without datalad."
+        assert icoorder <= 5, "Maximum supported icoorder is 5 without "\
+            "datalad."
+    else:
+        assert radius <= 30, "Maximum supported searchlight radius is 30."
+        assert icoorder <= 6, "Maximum supported icoorder is 6."
     assert mask_space in ['fsaverage', 'fsaverage6', 'fsaverage5', 'none']
 
-    if mask_space != 'none':
-        mask = get_mask(lr, mask_space=mask_space, icoorder=icoorder)
-        cortical_indices = np.where(mask)[0]
-        mapping = np.cumsum(mask) - 1
-    else:
-        nv = 4**icoorder * 10 + 2
-        cortical_indices = np.arange(nv)
-        mapping = None
 
-    npz_fn = os.path.join(
-        DIR, 'data', f'sls_fsaverage_{lr}h_20mm_icoorder5.npz')
-    sls_all, dists_all = load_npz(npz_fn)
+    # Convert from precomputed searchlights
+    radius_ = [_ for _ in [20, 30] if radius <= _][0]
+    icoorder_ = [_ for _ in [5, 6] if icoorder <= _][0]
+    all_sls, all_dists = load_searchlights(lr, radius_, icoorder_)
+    sls, dists = convert_searchlights(
+        all_sls, all_dists, lr, radius, mask_space, icoorder)
 
-    sls, dists = [], []
-    for i, (sl, d) in enumerate(zip(sls_all, dists_all)):
-        if i in cortical_indices:
-            m = np.logical_and(np.isin(sl, cortical_indices), d <= radius)
-            if mapping is None:
-                sls.append(sl[m])
-            else:
-                sls.append(mapping[sl[m]])
-            dists.append(d[m])
+    if cache:
+        output = {
+            'concatenated_searchlights': np.concatenate(sls),
+            'concatenated_distances': np.concatenate(dists),
+            'sections': np.cumsum([len(_) for _ in sls])[:-1],
+        }
+        np.savez(npz_fn, **output)
 
     if return_distances:
         return sls, dists
 
     return sls
+
+
+def list_cache_files():
+    original_files = [
+        'sls_fsaverage_lh_20mm_icoorder5.npz',
+        'sls_fsaverage_rh_20mm_icoorder5.npz',
+    ]
+    fns = sorted(glob(os.path.join(DIR, 'data', '*.npz')))
+    fns = [_ for _ in fns if os.path.basename(_) not in original_files]
+    return fns
