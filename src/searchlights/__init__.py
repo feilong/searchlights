@@ -70,7 +70,7 @@ def load_searchlights(lr, radius, space, geometry):
 def get_searchlights(lr, radius, space, geometry='on1031', mask=None):
     radius_ = 20
     sls, dists = load_searchlights(lr, radius_, space, geometry)
-    if mask is None:
+    if mask is not None:
         mask = get_cortical_mask(lr, space, mask)
     sls, dists = convert_searchlights(sls, dists, radius, mask)
     return sls, dists
